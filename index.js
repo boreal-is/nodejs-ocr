@@ -102,7 +102,7 @@ class Task
                     if( this.id != id ) { this.error( new Error('Id collision')); }
                     else
                     {
-                        let status = taskInfo.status;
+                        let status = taskInfo.status.toString();
                         if( status === 'Queued' || status === 'InProgress' )
                         {
                             this.waitForTaskCompletion();
@@ -225,25 +225,40 @@ class AbbyyClient
         if( method === 'processImage'     ||
             method === 'processTextField' ||
             method === 'processFields'    ||
-            method === 'submitImage' )
+            method === 'submitImage' ||
+            method === 'processBusinessCard')
         {
+            let _createTask = (_uploadBuffer) => {
+                // Create new task
+                let requestSettings =
+                    {
+                        method: 'POST',
+                        urlPathAndQuery: '/' + method + this._toUrlString(parameters),
+                        uploadData: _uploadBuffer
+                    };
+                new Task(this.connectionSettings, requestSettings, userCallback);
+            };
+
             // Prepare Upload Data
-            let uploadBuffer;
-            if( typeof uploadData == 'string' )
+            if( typeof uploadData === 'string' )
             {
-                if( fs.existsSync(uploadData) ) { uploadBuffer = fs.readFileSync(uploadData); }
+                if( fs.existsSync(uploadData) )
+                {
+                    fs.readFile(uploadData, (err, _uploadBuffer) => {
+                        if (err) {
+                            userCallback(new Error(`File read problem : ${err.message}`));
+                            return;
+                        }
+                        _createTask(_uploadBuffer);
+                    });
+                }
                 else { userCallback(new Error('File does not exist.')); }
             }
-            else { uploadBuffer = uploadData; } // Buffer with data directly passed
-
-            // Create new task
-            let requestSettings =
+            else
             {
-                method: 'POST',
-                urlPathAndQuery: '/' + method + this._toUrlString(parameters),
-                uploadData: uploadBuffer
-            };
-            new Task(this.connectionSettings, requestSettings, userCallback);
+                // Buffer with data directly passed
+                _createTask(uploadData)
+            }
         }
         else if ( method === 'processDocument' )
         {
@@ -264,6 +279,12 @@ class AbbyyClient
     {
         let args = this._checkArgs(arguments);
         this._runApiMethod('processImage', args.parameters, args.uploadData, args.userCallback);
+    }
+
+    processBusinessCard(/* [parameters], [upload data], callback */)
+    {
+        let args = this._checkArgs(arguments);
+        this._runApiMethod('processBusinessCard', args.parameters, args.uploadData, args.userCallback);
     }
 
     processTextField(/* [parameters], [upload data], callback */)
