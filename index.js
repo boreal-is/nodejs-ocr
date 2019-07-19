@@ -5,6 +5,8 @@ const url    = require('url');
 const fs     = require('fs');
 const xml2js = require('xml2js');
 
+const DEFAULT_POLLING_INTERVAL = 5000; // in ms
+
 
 /* -------------------- CLASSES -------------------- */
 class Task
@@ -125,7 +127,7 @@ class Task
 
     waitForTaskCompletion() // Wait 5 seconds (Abbyy recommended time) then poll task status
     {
-        const waitTimeout = 5000;
+        const waitTimeout = this.connectionSettings.pollingInterval;
         setTimeout(this.getTaskStatus, waitTimeout);
     }
 
@@ -182,13 +184,20 @@ class Task
 
 class AbbyyClient
 {
-    constructor(applicationId, password, serverUrl)
+    /**
+     * @param {String} applicationId
+     * @param {String} password
+     * @param {String} serverUrl
+     * @param {Number} [pollingInterval] The time to wait (in ms) before checking if the task is complete
+     */
+    constructor(applicationId, password, serverUrl, pollingInterval)
     {
         this.connectionSettings =
         {
             appId:  applicationId,
             pass:   password,
-            svrUrl: serverUrl
+            svrUrl: serverUrl,
+            pollingInterval: pollingInterval || DEFAULT_POLLING_INTERVAL
         };
     }
 
