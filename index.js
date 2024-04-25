@@ -78,7 +78,7 @@ class Task
         this.responseBuffer = Buffer.alloc(0); // Garbage collect old buffer and create new empty buffer
 
         if( err ) { this.error(err); }
-        else if( !parsedObj ) { this.error(new Error('Null output from xml2js')); }
+        else if( !parsedObj ) { this.error(new Error('Null output from xml2js OR the API is down/blocked on https://cloud.ocrsdk.com/')); }
         else
         {
             if( parsedObj.error )
